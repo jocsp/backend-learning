@@ -1,22 +1,31 @@
 import { drawHomeMenu } from "./homeMenu.js";
 import { menu } from "./menu.js";
-
-function generateEnrollmentReport() {
-    console.log("Generate enrollment report")
+function coursesPerDepartment() {
+    console.log("Courses for a specific department")
 }
 
-function generateGradeReport() {
-    console.log("Generate grade distribution report")
+function studentsInACourse() {
+    console.log("Students in a course")
 }
 
-function generateProfessorWorkloadReport() {
-    console.log("Generate professor workload report")
+function coursesByProfessor() {
+    console.log("Courses taught by a specific professor")
+}
+
+function studentsByMajor() {
+    console.log("Students by major")
+}
+
+function coursesWithNoStudents() {
+    console.log("Courses with no students")
 }
 
 const drawReportMenu = async () => await menu({
-    "Enrollment report": generateEnrollmentReport,
-    "Grade distribution report": generateGradeReport,
-    "Professor workload report": generateProfessorWorkloadReport,
+    "Courses for a specific department": coursesPerDepartment,
+    "Students in a course": studentsInACourse,
+    "Courses taught by a specific professor": coursesByProfessor,
+    "Students by major": studentsByMajor,
+    "Courses with no students": coursesWithNoStudents,
     "Go back": drawHomeMenu,
 }, "Reporting")
 
