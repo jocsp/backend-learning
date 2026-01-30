@@ -27,8 +27,32 @@ async function createDepartments() {
     drawHomeMenu()
 }
 
-function listDepartments() {
-    console.log("List departments")
+async function listDepartments() {
+
+    // fetch all departments with their courses count
+    const departments = await prisma.department.findMany({
+        include: {
+            _count: {
+                select: {
+                    courses: true,
+                }
+            }
+        }
+    })
+
+    console.log("")
+    for (const department of departments) {
+        console.log(`Department name: ${department.name}`)
+        console.log(`Amount of courses: ${department._count.courses}`)
+        console.log("")
+    }
+
+    console.log("")
+    console.log("")
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
+    
 }
 
 const drawDepartmentMenu = async () => await menu({
