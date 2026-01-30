@@ -1,6 +1,6 @@
 import { drawCourseMenu } from "./courseMenu.js";
 import { drawDepartmentMenu } from "./departmentMenu.js";
-import { menu } from "./menu.js";
+import { menu } from "../utils/menu.js";
 import { drawProfessorMenu } from "./professorMenu.js";
 import { drawReportMenu } from "./reportMenu.js";
 import { drawStudentMenu } from "./studentMenu.js";

@@ -1,5 +1,5 @@
 import { drawHomeMenu } from "./homeMenu.js";
-import { menu } from "./menu.js";
+import { menu } from "../utils/menu.js";
 
 function createCourse() {
     console.log("Create course")
