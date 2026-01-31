@@ -116,8 +116,39 @@ async function addProfessor() {
 
 }
 
-function listProfessors() {
-    console.log("List all professors")
+async function listProfessors() {
+    console.log("All professors")
+
+    const professors = await prisma.professor.findMany({
+        select: {
+            name: true,
+            department: {
+                select: {
+                    name: true,
+                }
+            },
+            _count: {
+                select: {
+                    courses: true,
+                }
+            }
+        }
+    })
+
+    
+    for (const professor of professors) {
+        console.log(`Name: ${professor.name}`)
+        console.log(`Department: ${professor.department.name}`)
+        console.log(`Courses: ${professor._count.courses}`)
+
+        spacer()
+    }
+
+    spacer(2)
+
+    await question("Enter the Enter/Return key to continue")
+
+    drawHomeMenu()
 }
 
 function viewProfessorSchedule() {
