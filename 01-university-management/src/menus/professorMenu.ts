@@ -151,8 +151,83 @@ async function listProfessors() {
     drawHomeMenu()
 }
 
-function viewProfessorSchedule() {
-    console.log("View a professor's complete schedule")
+async function viewProfessorSchedule() {
+
+    console.log("Details of Specific professor:")
+
+    // print all professors
+    const professors = await prisma.professor.findMany({
+        select: {
+            id: true,
+            name: true,
+            department: {
+                select: {
+                    name: true,
+                }
+            }
+
+        }
+    })
+
+    for (const professor of professors) {
+        console.log(`Id: ${professor.id} Name: ${professor.name} \n Department: ${professor.department.name} \n`)
+    }
+
+    // select id of professor
+
+    const professorId = await question("Please enter a professor ID to view their schedule");
+
+    const professor = await prisma.professor.findUnique({
+        where: {
+            id: Number(professorId),
+        },
+        // include the department to select the name
+        // include the courses to select the count of students enrolled
+        include: {
+            department: {
+                select: {
+                    name: true,
+                }
+            },
+            courses: {
+                select: {
+                    name: true,
+                    semester: true,
+                    year: true,
+                    _count: {
+                        select: {
+                            enrollments: true,
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+    spacer()
+
+    console.log(`ID: ${professor?.id} Name: ${professor?.name}`)
+    console.log(`Department ${professor?.department.name}`)
+    
+    spacer()
+
+    const courses = professor?.courses ?? []
+
+    if (courses.length > 0) {
+        for (const course of courses) {
+            console.log(`Course: ${course.name}`)
+            console.log(`${course.semester} ${course.year}`)
+            console.log(`Students Enrolled: ${course._count.enrollments}`)
+        }
+    } else {
+        console.log("No courses yet...")
+    }
+
+    spacer(2)
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
 }
 
 const drawProfessorMenu = async () => await menu({
