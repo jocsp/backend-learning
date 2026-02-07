@@ -290,8 +290,168 @@ async function listCourses() {
     drawHomeMenu()
 }
 
-function viewCourseDetails() {
-    console.log("View course details")
+async function viewCourseDetails() {
+
+    spacer()
+
+    // heading title
+    console.log("Course details")
+
+    let departmentId: number
+
+    const departments = await prisma.department.findMany({
+        select: {
+            id: true,
+            name: true,
+        }
+    })
+
+    console.log("Departments")
+
+    for (const department of departments) {
+        console.log(`${department.id} Department: ${department.name}`)
+    }
+
+    spacer()
+
+    while (true) {
+        const raw = await question("Please input the department id from the list above")
+
+        if (raw.trim() == "") {
+            console.log("Department id is empty, please input a department id.")
+            continue
+        }
+
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("Input is not valid integer option, please try again.")
+            continue
+        }
+
+        const isDepartmentId = departments.some(department => department.id == parsed)
+
+        if (isDepartmentId) {
+            departmentId = parsed
+            break
+        } else {
+            console.log("Please input a valid option.")
+        }
+
+    }
+
+    const courses = await prisma.course.findMany({
+        where: {
+            departmentId: departmentId,
+        }
+    })
+
+    const {name: departmentName} = departments.find(department => department.id == departmentId) ?? {name: "department"}
+
+    spacer()
+
+    console.log(`Courses in ${departmentName}`)
+
+    spacer()
+
+    for (const course of courses) {
+        console.log(`Id: ${course.id} Course: ${course.name}`)
+    }
+
+    spacer()
+
+    let courseId: number
+
+    // collect course id user input and validate it
+    while (true) {
+        const raw = await question("Please input the course id from the list above to view its details")
+
+        if (raw.trim() == "") {
+            console.log("Course id is empty, please input a department id.")
+            continue
+        }
+
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("Input is not valid integer option, please try again.")
+            continue
+        }
+
+        const isCourseId = courses.some(course => course.id == parsed)
+
+        if (isCourseId) {
+            courseId = parsed
+            break
+        } else {
+            console.log("Please input a valid option.")
+        }
+
+    }
+
+    const course = await prisma.course.findFirst({
+        where: {
+            id: courseId,
+        },
+        // including the enrollments and the list of students
+        include: {
+            enrollments: {
+                include: {
+                    student: true
+                }
+            },
+            department: true,
+            professor: true,
+            _count: {
+                select: {
+                    enrollments: true,
+                }
+            }
+        }
+    })
+
+    spacer()
+
+    console.log("Course details: ")
+
+    spacer()
+
+    if (!course) {
+        console.log("No course found in the database with that id")
+        
+        spacer(2)
+        
+        await question("Press Enter/Return key to continue")
+        return drawHomeMenu()
+    }
+
+    console.log(`Course: ${course.name} (${course.courseCode})`)
+    console.log(`${course.semester} ${course.year} (${course.mode}) `)
+    console.log(`Credits: ${course.credits}`)
+    console.log(`Department: ${course.department.name}`)
+    console.log(`Professor: ${course.professor.name}`)
+    console.log(`Students enrolled: ${course._count.enrollments}`)
+
+    spacer()
+
+    console.log("List of students enrolled:")
+
+    spacer()
+
+    if (course.enrollments.length > 0) {
+        for (const enrollment of course.enrollments) {
+            console.log(`Student Id: ${enrollment.student.id} Name: ${enrollment.student.name}`)
+        }
+    } else {
+        console.log("No students enrolled yet.")
+    }
+
+    spacer(2)
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
+
 }
 
 const drawCourseMenu = async () => await menu ({
