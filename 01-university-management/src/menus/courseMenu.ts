@@ -38,7 +38,7 @@ async function createCourse() {
     console.log("Course mode:")
     const modes = Object.values(Mode);
     for (let i = 1; i <= modes.length; i++) {
-        console.log(`${i}. ${modes[i]}`)
+        console.log(`${i}. ${modes[i-1]}`)
     }
 
     spacer()
@@ -58,7 +58,7 @@ async function createCourse() {
         }
 
         if (parsed >= 1 && parsed <= modes.length) {
-            courseMode = modes[parsed] as Mode
+            courseMode = modes[parsed-1] as Mode
             break;
         } else {
             console.log("Please choose an option from the list above")
@@ -71,7 +71,7 @@ async function createCourse() {
 
     console.log("Select semester:")
     for (let i = 1; i <= semesters.length; i++) {
-        console.log(`${i}. ${semesters[i]}`)
+        console.log(`${i}. ${semesters[i-1]}`)
     }
 
     spacer()
@@ -91,7 +91,7 @@ async function createCourse() {
         }
 
         if (parsed >= 1 && parsed <= semesters.length) {
-            courseSemester = semesters[parsed] as Semester
+            courseSemester = semesters[parsed-1] as Semester
             break
         } else {
             console.log("Please select a valid option from the list above")
@@ -244,8 +244,50 @@ async function createCourse() {
     
 }
 
-function listCourses() {
-    console.log("List all courses")
+async function listCourses() {
+
+    spacer()
+
+    // heading section
+    console.log("All courses: ")
+
+
+    // fetch all courses, sorted by dpeartment and year
+    // including the professor and department
+    const courses = await prisma.course.findMany({
+        orderBy: [
+            { departmentId: "asc"},
+            { year: "desc"},
+        ],
+        include: {
+            department: true,
+            professor: true,
+            _count: {
+                select: {
+                    enrollments: true,
+                }
+            }
+        }
+    })
+
+    spacer()
+
+    for (const course of courses) {
+        console.log(`Course: ${course.name} (${course.courseCode})`)
+        console.log(`${course.semester} ${course.year} (${course.mode}) `)
+        console.log(`Credits: ${course.credits}`)
+        console.log(`Department: ${course.department.name}`)
+        console.log(`Professor: ${course.professor.name}`)
+        console.log(`Students enrolled: ${course._count.enrollments}`)
+
+        spacer()
+    }
+
+    spacer()
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
 }
 
 function viewCourseDetails() {
