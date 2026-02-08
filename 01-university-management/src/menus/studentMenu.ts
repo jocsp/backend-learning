@@ -277,8 +277,67 @@ async function dropStudentFromCourse() {
 
 }
 
-function studentSchedule() {
-    console.log("View a student's schedule")
+async function studentSchedule() {
+    console.log("View student schedule")
+
+    const studentId = await collectStudentId()
+
+    const student = await prisma.student.findFirst({
+        where: {
+            id: studentId,
+        },
+
+        include: {
+            enrollments: {
+                include: {
+                    course: {
+                        select: {
+                            name: true,
+                            courseCode: true,
+                            semester: true,
+                            year: true,
+                            mode: true,
+                            credits: true,
+                        }
+                    },
+                }
+            }
+        }
+    })
+
+    if (!student) {
+        spacer()
+
+        console.log("Student not found.")
+
+        spacer(2)
+
+        await question("Press Enter/Return key to continue")
+
+        return drawHomeMenu()
+    }
+
+    spacer()
+
+    console.log(`${student.name}'s Schedule`)
+
+    spacer()
+
+    for (const enrollment of student.enrollments) {
+        console.log(`Course: ${enrollment.course.name} (${enrollment.course.courseCode})`)
+        console.log(`${enrollment.course.semester} ${enrollment.course.year}`)
+        console.log(`Mode: ${enrollment.course.mode}`)
+        console.log(`Credits: ${enrollment.course.credits}`)
+        console.log(`Grade: ${enrollment.grade ?? "-"}`)
+        
+        spacer()
+    }
+
+    spacer()
+
+    await question("Press Enter/Return to continue")
+
+    drawHomeMenu()
 }
 
 function gradeStudent() {
