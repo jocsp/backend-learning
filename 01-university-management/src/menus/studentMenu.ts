@@ -96,24 +96,7 @@ async function enrollStudentInCourse() {
 
     let studentId: number, courseId: number
 
-    // collect the student id 
-    while (true) {
-        const raw = await question("Please the student id")
-        
-        if (raw.trim() == '') {
-            console.log("Student is is empty, please input a student id")
-            continue
-        }
-
-        const parsed = Number(raw)
-        if (isNaN(parsed) || !Number.isInteger(parsed)) {
-            console.log("The input student id is not valid, please try again")
-            continue
-        }
-
-        studentId = parsed
-        break
-    }
+    studentId = await collectStudentId();
 
     spacer()
 
@@ -134,25 +117,7 @@ async function enrollStudentInCourse() {
         return drawHomeMenu()
     }
 
-    // collect course id
-
-    while (true) {
-        const raw = await question("Please the course id")
-        
-        if (raw.trim() == '') {
-            console.log("Course is is empty, please input a course id")
-            continue
-        }
-
-        const parsed = Number(raw)
-        if (isNaN(parsed) || !Number.isInteger(parsed)) {
-            console.log("The input course id is not valid, please try again")
-            continue
-        }
-
-        courseId = parsed
-        break
-    }
+    courseId = await collectCourseId()
 
     const course = await prisma.course.findFirst({
         where: {
@@ -216,8 +181,100 @@ async function enrollStudentInCourse() {
     drawHomeMenu()
 }
 
-function dropStudentFromCourse() {
-    console.log("Drop a student from a course")
+async function dropStudentFromCourse() {
+    spacer()
+
+    // heading title
+    console.log("Drop Student: ")
+
+    const studentId = await collectStudentId()
+
+    const courseId = await collectCourseId()
+
+    // looking up the enrollment and selecting name of student, course name and code
+    const enrollment = await prisma.enrollment.findFirst({
+        where: {
+            courseId: courseId,
+            studentId: studentId,
+        },
+        include: {
+            student: {
+                select: {
+                    name: true,
+                }
+            },
+            course: {
+                select: {
+                    name: true,
+                    courseCode: true,
+                }
+            }
+        }
+    })
+
+    if (!enrollment) {
+        spacer()
+        console.log("No enrollment found.")
+        
+        spacer(2)
+
+        await question("Press Enter/Return key to continue")
+
+        return drawHomeMenu()
+    }
+
+    const confirmation = await question(`Are you sure you want to drop ${enrollment.student.name} from ${enrollment.course.name} (${enrollment.course.courseCode})? Y/n`)
+
+    if (confirmation.toLowerCase() != 'y') {
+        spacer()
+        console.log("Aborting operation...")
+        
+        spacer(2)
+
+        await question("Press Enter/Return key to continue")
+
+        return drawHomeMenu()
+    }
+
+    try {
+        // dropping student
+        const droppedEnrollment = await prisma.enrollment.delete({
+            where: {
+                courseId_studentId: {
+                    studentId: studentId,
+                    courseId: courseId,
+                },
+            },
+            include: {
+                student: {
+                    select: {
+                        name: true,
+                    },
+                },
+                course: {
+                    select: {
+                        name: true,
+                        courseCode: true,
+                    },
+                }
+            }
+        })
+
+        spacer()
+        console.log(`${droppedEnrollment.student.name} successfully dropped from ${droppedEnrollment.course.name} (${droppedEnrollment.course.courseCode})`)
+    } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError) {
+            console.log(e.message)
+        }
+    }
+
+    spacer(2)
+
+    await question("Press Enter/Return key to continue")
+
+    return drawHomeMenu()
+
+
 }
 
 function studentSchedule() {
@@ -226,6 +283,46 @@ function studentSchedule() {
 
 function gradeStudent() {
     console.log("Assign grade to a student")
+}
+
+async function collectStudentId(): Promise<number> {
+    // collect the student id 
+    while (true) {
+        const raw = await question("Please the student id")
+        
+        if (raw.trim() == '') {
+            console.log("Student id is is empty, please input a student id")
+            continue
+        }
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("The input student id is not valid, please try again")
+            continue
+        }
+
+        return parsed
+    }
+}
+
+async function collectCourseId(): Promise<number> {
+    // collect course id
+    while (true) {
+        const raw = await question("Please the course id")
+        
+        if (raw.trim() == '') {
+            console.log("Course is is empty, please input a course id")
+            continue
+        }
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("The input course id is not valid, please try again")
+            continue
+        }
+
+        return parsed
+    }
 }
 
 const drawStudentMenu = async () => await menu({
