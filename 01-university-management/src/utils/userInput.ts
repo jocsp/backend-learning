@@ -28,4 +28,44 @@ async function question(query: string): Promise<string> {
     return answer
 }
 
-export { question }
+async function collectStudentId(): Promise<number> {
+    // collect the student id 
+    while (true) {
+        const raw = await question("Please the student id")
+        
+        if (raw.trim() == '') {
+            console.log("Student id is is empty, please input a student id")
+            continue
+        }
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("The input student id is not valid, please try again")
+            continue
+        }
+
+        return parsed
+    }
+}
+
+async function collectCourseId(): Promise<number> {
+    // collect course id
+    while (true) {
+        const raw = await question("Please the course id")
+        
+        if (raw.trim() == '') {
+            console.log("Course is is empty, please input a course id")
+            continue
+        }
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("The input course id is not valid, please try again")
+            continue
+        }
+
+        return parsed
+    }
+}
+
+export { question, collectCourseId, collectStudentId }

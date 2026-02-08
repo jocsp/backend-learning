@@ -1,7 +1,7 @@
 import { drawHomeMenu } from "./homeMenu.js";
 import { menu } from "../utils/menu.js";
 import { spacer } from "../utils/spacer.js";
-import { question } from "../utils/userInput.js";
+import { question, collectCourseId, collectStudentId } from "../utils/userInput.js";
 import { validateDate } from "../utils/date.js";
 import { prisma } from "../prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
@@ -426,46 +426,6 @@ async function gradeStudent() {
 
     drawHomeMenu()
     
-}
-
-async function collectStudentId(): Promise<number> {
-    // collect the student id 
-    while (true) {
-        const raw = await question("Please the student id")
-        
-        if (raw.trim() == '') {
-            console.log("Student id is is empty, please input a student id")
-            continue
-        }
-
-        const parsed = Number(raw)
-        if (isNaN(parsed) || !Number.isInteger(parsed)) {
-            console.log("The input student id is not valid, please try again")
-            continue
-        }
-
-        return parsed
-    }
-}
-
-async function collectCourseId(): Promise<number> {
-    // collect course id
-    while (true) {
-        const raw = await question("Please the course id")
-        
-        if (raw.trim() == '') {
-            console.log("Course is is empty, please input a course id")
-            continue
-        }
-
-        const parsed = Number(raw)
-        if (isNaN(parsed) || !Number.isInteger(parsed)) {
-            console.log("The input course id is not valid, please try again")
-            continue
-        }
-
-        return parsed
-    }
 }
 
 const drawStudentMenu = async () => await menu({
