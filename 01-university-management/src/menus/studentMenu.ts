@@ -4,6 +4,7 @@ import { spacer } from "../utils/spacer.js";
 import { question } from "../utils/userInput.js";
 import { validateDate } from "../utils/date.js";
 import { prisma } from "../prisma.js";
+import { Prisma } from "../../generated/prisma/client.js";
 
 async function registerStudent() {
 
@@ -87,8 +88,132 @@ async function registerStudent() {
     drawHomeMenu()
 }
 
-function enrollStudentInCourse() {
-    console.log("Enroll student in a course")
+async function enrollStudentInCourse() {
+    
+    spacer()
+    // heading tittle
+    console.log("Enroll student: ")
+
+    let studentId: number, courseId: number
+
+    // collect the student id 
+    while (true) {
+        const raw = await question("Please the student id")
+        
+        if (raw.trim() == '') {
+            console.log("Student is is empty, please input a student id")
+            continue
+        }
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("The input student id is not valid, please try again")
+            continue
+        }
+
+        studentId = parsed
+        break
+    }
+
+    spacer()
+
+    const student = await prisma.student.findFirst({
+        where: {
+            id: studentId,
+        }
+    })
+
+    if (!student) {
+        
+        console.log("No student found with the provided id")
+
+        spacer()
+
+        await question("Press Enter/Return to continue")
+
+        return drawHomeMenu()
+    }
+
+    // collect course id
+
+    while (true) {
+        const raw = await question("Please the course id")
+        
+        if (raw.trim() == '') {
+            console.log("Course is is empty, please input a course id")
+            continue
+        }
+
+        const parsed = Number(raw)
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("The input course id is not valid, please try again")
+            continue
+        }
+
+        courseId = parsed
+        break
+    }
+
+    const course = await prisma.course.findFirst({
+        where: {
+            id: courseId,
+        }
+    })
+
+    if (!course) {
+        
+        console.log("No course found with the provided id")
+
+        spacer()
+
+        await question("Press Enter/Return to continue")
+
+        return drawHomeMenu()
+    }
+
+    // confirmation message
+
+    spacer()
+    const confirmation = await question(`Do you want to enroll ${student.name} in ${course.name} (${course.courseCode})? Y/n`)
+    spacer()
+    if (confirmation.toLowerCase() != "y") {
+        console.log("Aborting enrollment...")
+
+        spacer(2)
+
+        await question("Press Enter/Return key to continue")
+        
+        return drawHomeMenu()
+    }
+
+    try {
+
+        const enrollment = await prisma.enrollment.create({
+            data: {
+                courseId: course.id,
+                studentId: student.id,
+            }
+        })
+
+        console.log(`Enrollment Complete: ${student.name} successfuly enrolled in ${course.name} (${course.courseCode})`)
+
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code == "P2002") {
+                console.log("Student already enrolled in the course!")
+            } else {
+                console.log(error.message)
+            }
+        } else {
+            console.log(error);
+        }
+    }
+
+    spacer(2)
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
 }
 
 function dropStudentFromCourse() {
