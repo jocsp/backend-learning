@@ -340,8 +340,92 @@ async function studentSchedule() {
     drawHomeMenu()
 }
 
-function gradeStudent() {
-    console.log("Assign grade to a student")
+async function gradeStudent() {
+
+    spacer()
+
+    // heading title
+    console.log("Grade Student: ")
+
+    const studentId = await collectStudentId()
+
+    const courseId = await collectCourseId()
+
+    spacer()
+
+    const enrollment = await prisma.enrollment.findUnique({
+        where: {
+            courseId_studentId: {
+                courseId: courseId,
+                studentId: studentId,
+            }
+        },
+
+        include: {
+            student: true,
+            course: true,
+        }
+    })
+
+    if (!enrollment) {
+        spacer()
+        
+        console.log("No enrollemnt with found")
+        
+        spacer(2)
+
+        await question("Press Enter/Return key to continue")
+
+        return drawHomeMenu()
+    }
+
+    const letterGrades: string[] = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+
+    let grade: string
+
+    while (true) {
+        const raw = await question(`Which grade do you want to assign ${enrollment.student.name} for ${enrollment.course.name} (${enrollment.course.courseCode})`)
+
+        if (raw.trim() == '') {
+            console.log("Grade input is empty, please try again")
+            continue
+        }
+
+        if (letterGrades.includes(raw)) {
+            grade = raw
+            break
+        } else {
+            console.log("Letter grade not valid. Input a valid letter grade.")
+        }
+    }
+
+    try {
+        const enrollmentWithGrade = await prisma.enrollment.update({
+            where: {
+                courseId_studentId: {
+                    courseId: courseId,
+                    studentId: studentId,
+                }
+            },
+            data: {
+                grade: grade,
+            }
+        })
+
+        spacer()
+
+        console.log("Letter successfully assigned.")
+    } catch (e) {
+        console.log(e)
+    }
+
+
+    spacer(2)
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
+    
 }
 
 async function collectStudentId(): Promise<number> {
