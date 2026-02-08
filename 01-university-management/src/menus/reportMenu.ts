@@ -3,8 +3,105 @@ import { menu } from "../utils/menu.js";
 import { spacer } from "../utils/spacer.js";
 import { collectCourseId, question } from "../utils/userInput.js";
 import { prisma } from "../prisma.js";
-function coursesPerDepartment() {
-    console.log("Courses for a specific department")
+import { parse } from "node:path";
+
+async function coursesPerDepartment() {
+    
+    spacer()
+    
+    // heading title
+    console.log("Courses per Department")
+
+    spacer()
+
+    const departments = await prisma.department.findMany()
+
+    for (const department of departments) {
+        console.log(`${department.name} - ID: ${department.id}`)
+    }
+
+    spacer()
+
+    let departmentId: number
+
+    while (true) {
+        const raw = await question("Select department by ID (see list of departments above)")
+
+        if (raw.trim() == '') {
+            console.log("Input is empty, please enter the department ID from the list above")
+            continue
+        }
+
+        const parsed = Number(raw)
+
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("Please enter a valid department ID from the above list")
+            continue
+        }
+
+        const departmentExist = departments.some((d) => d.id == parsed)
+
+        if (!departmentExist) {
+            console.log("The input department does not exist, please see the list above.")
+            continue
+        }
+
+        // the input id is validated and therefore assigned
+        departmentId = parsed
+
+        break
+    }
+
+    const department = await prisma.department.findUnique({
+        where: {
+            id: departmentId,
+        },
+        select: {
+            name: true,
+        },
+    })
+
+    const courses = await prisma.course.findMany({
+        where: {
+            departmentId: departmentId,
+        },
+        include: {
+            _count: {
+                select: {
+                    enrollments: true,
+                }
+            }
+        }
+    })
+
+    spacer()
+
+    if (!courses) {
+        console.log("No courses found in the department")
+        spacer(2)
+        await question("Press Enter/Return key to continue")
+
+        return drawHomeMenu()
+    }
+
+    console.log(`Coures for ${department?.name} department: `)
+
+    spacer()
+
+    for (const course of courses) {
+        console.log(`Course: ${course.name} (${course.courseCode})`)
+        console.log(`${course.semester} ${course.year} (${course.mode})`)
+        console.log(`Students enrolled: ${course._count.enrollments}`)
+        
+        spacer()
+    }
+
+
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
+
 }
 
 async function studentsInACourse() {
@@ -52,7 +149,7 @@ async function studentsInACourse() {
 
     console.log(`Course: ${course.name} (${course.courseCode})`)
     console.log(`${course.semester} ${course.year} (${course.mode})`)
-    console.log(`Total students enrolled: ${course._count.enrollments}`)
+    console.log(`Students enrolled: ${course._count.enrollments}`)
 
     spacer()
 
