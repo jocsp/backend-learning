@@ -174,8 +174,84 @@ async function studentsInACourse() {
 
 }
 
-function coursesByProfessor() {
-    console.log("Courses taught by a specific professor")
+async function coursesByProfessor() {
+    
+    spacer()
+    // heading title
+    console.log("Courses by Professor")
+
+    let professorId: number
+
+    while (true) {
+        const raw = await question("Input professor ID")
+
+        if (raw.trim() == '') {
+            console.log("Input is empty, please enter the department ID from the list above")
+            continue
+        }
+
+        const parsed = Number(raw)
+
+        if (isNaN(parsed) || !Number.isInteger(parsed)) {
+            console.log("Please enter a valid professor ID")
+            continue
+        }
+
+        // the input id is validated and therefore assigned
+        professorId = parsed
+
+        break
+    }
+
+    spacer()
+
+    // query for professor, include the courses and the count of students enrolled
+    const professor = await prisma.professor.findUnique({
+        where: {
+            id: professorId,
+        },
+        include: {
+            courses: {
+                include: {
+                    _count: {
+                        select: {
+                            enrollments: true,
+                        }
+                    }
+                }
+            },
+        }
+    })
+
+    if (!professor) {
+        console.log("No professor found with the provided ID")
+
+        spacer()
+
+        await question("Press Enter/Return key to continue")
+
+        return drawHomeMenu()
+    }
+
+    console.log(`Courses taught by professor ${professor.name}: `)
+
+    if (professor.courses.length != 0) {
+        for (const course of professor.courses) {
+            console.log(`Course: ${course.name} (${course.courseCode})`)
+            console.log(`${course.semester} ${course.year} (${course.mode})`)
+            console.log(`Students enrolled: ${course._count.enrollments}`)
+            
+            spacer()
+        }
+    } else {
+        spacer()
+        console.log("No courses yet...")
+        spacer()
+    }
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
 }
 
 function studentsByMajor() {
