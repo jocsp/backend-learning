@@ -254,8 +254,41 @@ async function coursesByProfessor() {
     drawHomeMenu()
 }
 
-function studentsByMajor() {
-    console.log("Students by major")
+async function studentsByMajor() {
+    
+    spacer()
+
+    // heading title
+    console.log("Students by major: ")
+
+    spacer()
+
+    const students = await prisma.student.findMany({
+        orderBy: {
+            major: "asc"
+        }
+    })
+
+    let majorSet = new Set()
+
+    for (const student of students) {
+        if (!majorSet.has(student.major)) {
+            // print major for the section heading
+            console.log(`*** ${student.major.toUpperCase()} ***`)
+            spacer()
+            majorSet.add(student.major)
+        }
+
+        console.log(`Student: ${student.name} (${student.id})`)
+        console.log(`Email: ${student.email}`)
+        console.log(`Registration date: ${student.registrationDate.toLocaleDateString()}`)
+
+        spacer()
+    }
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
 }
 
 function coursesWithNoStudents() {
