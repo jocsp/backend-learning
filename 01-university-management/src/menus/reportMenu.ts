@@ -291,8 +291,42 @@ async function studentsByMajor() {
     drawHomeMenu()
 }
 
-function coursesWithNoStudents() {
-    console.log("Courses with no students")
+async function coursesWithNoStudents() {
+    
+    spacer()
+
+    // heading title
+    console.log("Courses with zero enrollments: ")
+
+    spacer()
+
+    // courses with zero enrollments
+    const courses = await prisma.course.findMany({
+        where: {
+            enrollments: {
+                none: {},
+            }
+        },
+        include: {
+            professor: true,
+            department: true,
+        }
+    })
+
+    for (const course of courses) {
+        console.log(`Course: ${course.name} (${course.courseCode})`)
+        console.log(`${course.semester} ${course.year} (${course.mode}) `)
+        console.log(`Credits: ${course.credits}`)
+        console.log(`Department: ${course.department.name}`)
+        console.log(`Professor: ${course.professor.name}`)
+
+        spacer()
+    }
+
+    await question("Press Enter/Return key to continue")
+
+    drawHomeMenu()
+
 }
 
 const drawReportMenu = async () => await menu({
